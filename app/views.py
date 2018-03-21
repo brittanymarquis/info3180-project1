@@ -26,7 +26,7 @@ def about():
     return render_template('about.html', name="Mary Jane")
 
 
-@app.route('/upload', methods=['POST', 'GET'])
+@app.route('/upload', methods=["POST", "GET"])
 def upload():
     if not session.get('logged_in'):
         abort(401)
