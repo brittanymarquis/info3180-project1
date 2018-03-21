@@ -5,10 +5,16 @@ Werkzeug Documentation:  http://werkzeug.pocoo.org/documentation/
 This file creates your application.
 """
 import os
-from app import app, Allowed_uploads
+from app import app,db,Allowed_uploads
 from flask import render_template, request, redirect, url_for, flash, session, abort, send_from_directory
 from werkzeug.utils import secure_filename
-from form import UploadForm
+from form import NewProfileForm
+from models import UserProfile
+
+from sqlalchemy import exc
+
+import datetime
+import os
 
 ###
 # Routing for your application.
@@ -18,79 +24,61 @@ from form import UploadForm
 def home():
     """Render website's home page."""
     return render_template('home.html')
-
-
-@app.route('/about/')
-def about():
-    """Render the website's about page."""
-    return render_template('about.html', name="Mary Jane")
-
-
-@app.route('/upload', methods=['POST', 'GET'])
-def upload():
-    if not session.get('logged_in'):
-        abort(401)
-
-    # Instantiate your form class
-
-    uploadForm = UploadForm()
-   
-    # Validate file upload on submit
+    
+    
+@app.route('/profile', methods=["GET", "POST"])
+def profile():
+    ProfileForm = NewProfileForm()
+    
     if request.method == 'POST':
-        if uploadForm.validate() == False:
-            flash_errors(uploadForm)
-        else:
-        # Get file data and save to your uploads folder
+        if ProfileForm.validate_on_submit()==True:
+            
+                firstname = ProfileForm.firstname.data
+                lastname = ProfileForm.lastname.data
+                gender = ProfileForm.gender.data
+                email = ProfileForm.email.data
+                location = ProfileForm.location.data
+                bio = ProfileForm.bio.data
+               
+                
+                user = UserProfile(firstname=firstname, lastname=lastname, gender=gender, email=email, location=location, bio=bio)
+                db.session.add(user)
+                db.session.commit()
+                file.save(os.path.join(app.config["UPLOAD_FOLDER"],Filename))
+                flash('Successfullly added.', 'success')
+                return redirect(url_for('profiles'))
+    return render_template("create_profile.html", user=ProfileForm)
+    
+    
+@app.route("/profiles/")
+def profiles():
+    users = UserProfile.query.all()
+    profiles = []
+    
+    for user in users:
+        profiles.append({ "firstname":user.firstname, "lastname": user.lastname, "gender": user.gender, "location":user.location, "id":user.id})
+    return render_template("profiles.html", user = profiles)
+
+@app.route('/profile/<userid>')
+def inidi_profile(userid):
+    user = UserProfile.query.filter_by(id=userid).first()
+    
+    if user is None:
+        return redirect(url_for('home'))
         
-        
-            f = uploadForm.upload.data
-            filename = secure_filename(f.filename)
-            f.save(os.path.join(app.config["UPLOAD_FOLDER"],filename))
-            flash('File Saved', 'success')
-            return redirect(url_for('home'))
+    c_y = int(user.created_on.split("-")[0])
+    c_m = int(user.created_on.split("-")[1])
+    c_d = int(user.created_on.split("-")[2])
+    
+    user.created_on = format_date_joined(c_y, c_m, c_d)
+    
+    return render_template("profile.html", user=user)
 
-    return render_template('upload.html', uploadForm = uploadForm)
-
-@app.route('/app/static/uploads')
-def send_images(filename):
-    return send_from_directory('/app/static/uploads', filename)
-
-@app.route('/files')
-def files():
-    image_names=os.listdir('./app/static/uploads')
-    return render_template("files.html", image_names=image_names)
-
-
-
-def get_uploaded_images():
-    upload = []
-    L_file = os.listdir('./app/static/uploads/')
-    for file in L_file:
-            if file.split('.')[-1] in Allowed_uploads:
-                upload.append(file)
-    return upload
- 
+def format_date_joined(yy,mm,dd):
+    return datetime.date(yy,mm,dd).strftime("%B, %d,%Y")
  
     
-@app.route('/login', methods=['POST', 'GET'])
-def login():
-    error = None
-    if request.method == 'POST':
-        if request.form['username'] != app.config['USERNAME'] or request.form['password'] != app.config['PASSWORD']:
-            error = 'Invalid username or password'
-        else:
-            session['logged_in'] = True
-            
-            flash('You were logged in', 'success')
-            return redirect(url_for('upload'))
-    return render_template('login.html', error=error)
 
-
-@app.route('/logout')
-def logout():
-    session.pop('logged_in', None)
-    flash('You were logged out', 'success')
-    return redirect(url_for('home'))
 
 
 
