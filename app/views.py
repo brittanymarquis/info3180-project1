@@ -24,12 +24,33 @@ import os
 def home():
     """Render website's home page."""
     return render_template('home.html')
+<<<<<<< HEAD
     
     
 @app.route('/profile', methods=["GET", "POST"])
 def profile():
     ProfileForm = NewProfileForm()
     
+=======
+
+
+@app.route('/about/')
+def about():
+    """Render the website's about page."""
+    return render_template('about.html', name="Mary Jane")
+
+
+@app.route('/upload', methods=["POST", "GET"])
+def upload():
+    if not session.get('logged_in'):
+        abort(401)
+
+    # Instantiate your form class
+
+    uploadForm = UploadForm()
+   
+    # Validate file upload on submit
+>>>>>>> e7896355cb53ec999dd87d90d429340049595511
     if request.method == 'POST':
         if ProfileForm.validate_on_submit()==True:
             
