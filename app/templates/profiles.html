@@ -8,19 +8,19 @@
 
 <div class="profiles-container">
     <h1 class="title">Profiles</h1>
-    {% for profile in profiles %}
+    {% for user in users%}
     <div class="row border-style center profile">
         
         <div class="col pro-data">
-            <span class="sec1">{{ profile['firstname'] }}</span>
-            <span class="sec2">{{ profile['lastname'] }}</span>
-            <span class="sec3">{{ profile['gender'] }}</span>
-            <span class="sec4">{{ profile['location'] }}</span>
-        </div>
-        <div class="view-profile center col">
-            <a class="view-btn btn-success" href="{{ url_for('inidi_profile', userid=profile['id']) }}">View profile</a>
-        </div>
-    </div>
+            <strong class="profile-name">{{ user.first_name}} {{ user.last_name }}</strong>
+                <div class="profile-info mb-2">
+                    <div class="mb-3">
+                        <div class = "row">Gender: {{ user.gender }} </div>
+                        <div class = "row">Location: {{ user.location }} </div>
+                        <br>
+                        <a href="{{ url_for('profile', userid=user.userid) }}" class="btn btn-success">View Profile</a>
+                    </div>
+</div> 
     {% endfor %}
 </div>
 {% endblock%}

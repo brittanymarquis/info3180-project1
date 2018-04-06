@@ -4,9 +4,9 @@ Jinja2 Documentation:    http://jinja.pocoo.org/2/documentation/
 Werkzeug Documentation:  http://werkzeug.pocoo.org/documentation/
 This file creates your application.
 """
-import os
+import os,datetime, random, re
 from app import app,db,Allowed_uploads
-from flask import render_template, request, redirect, url_for, flash, session, abort, send_from_directory
+from flask import render_template, request, redirect, url_for, flash, session, abort, send_from_directory,make_response,jsonify
 from werkzeug.utils import secure_filename
 from form import NewProfileForm
 from models import UserProfile
@@ -40,11 +40,9 @@ def profile():
                 location = ProfileForm.location.data
                 bio = ProfileForm.bio.data
                
-                
                 user = UserProfile(firstname=firstname, lastname=lastname, gender=gender, email=email, location=location, bio=bio)
                 db.session.add(user)
                 db.session.commit()
-                file.save(os.path.join(app.config["UPLOAD_FOLDER"],Filename))
                 flash('Successfullly added.', 'success')
                 return redirect(url_for('profiles'))
     return render_template("create_profile.html", user=ProfileForm)
@@ -52,35 +50,38 @@ def profile():
     
 @app.route("/profiles/")
 def profiles():
-    users = UserProfile.query.all()
-    profiles = []
+    ulist = UserProfile.query.all()
+    users =  [{"First Name": user.first_name, "Last Name": user.last_name, "userid": user.userid} for user in ulist]
     
-    for user in users:
-        profiles.append({ "firstname":user.firstname, "lastname": user.lastname, "gender": user.gender, "location":user.location, "id":user.id})
-    return render_template("profiles.html", user = profiles)
+    if request.method == 'GET':
+        if ulist is not None:
+            return render_template("profiles.html", user=ulist)
+        else:
+            flash('No Users Found', 'danger')
+            return redirect(url_for("home"))
+    
+    elif request.method == 'POST':
+        if ulist is not None:
+            response = make_response(jsonify({"users": users}))                                           
+            response.headers['Content-Type'] = 'application/json'            
+            return response
+        else:
+            flash('No Users Found', 'danger')
+    return redirect(url_for("home")) 
 
-@app.route('/profile/<userid>')
-def inidi_profile(userid):
-    user = UserProfile.query.filter_by(id=userid).first()
-    
-    if user is None:
-        return redirect(url_for('home'))
-        
-    c_y = int(user.created_on.split("-")[0])
-    c_m = int(user.created_on.split("-")[1])
-    c_d = int(user.created_on.split("-")[2])
-    
-    user.created_on = format_date_joined(c_y, c_m, c_d)
-    
-    return render_template("profile.html", user=user)
+def generateUserId(firstname, lastname):
+    temp = re.sub('[.: -]', '', str(datetime.datetime.now()))
+    temp = list(temp)
+    temp.extend(list(map(ord,firstname)))
+    temp.extend(list(map(ord,lastname)))
+    random.shuffle(temp)
+    temp = list(map(str,temp))
+    return int("".join(temp[:7]))%10000000 
 
 def format_date_joined(yy,mm,dd):
     return datetime.date(yy,mm,dd).strftime("%B, %d,%Y")
  
     
-
-
-
 
 
 ###

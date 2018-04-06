@@ -12,8 +12,7 @@ class UserProfile(db.Model):
 	  bio 			    = db.Column(db.String(250))
 	 
 	 
-	  
-	  def __init__(self,firstname,lastname,gender,email,location,bio,):
+def __init__(self,firstname,lastname,gender,email,location,bio,):
 		self.firstname   	= firstname
 		self.lastname 		= lastname
 		self.gender 		= gender
@@ -23,5 +22,21 @@ class UserProfile(db.Model):
 		
 		
 		
-		def __repr__(self):
-			return "User: {0} {1}".format(self.firstname, self.lastname)
+	
+def is_authenticated(self):
+        return True
+
+def is_active(self):
+        return True
+
+def is_anonymous(self):
+        return False
+
+def get_id(self):
+     try:
+        return unicode(self.id)  # python 2 suppory
+     except NameError:
+        return str(self.id)  # python 3 support
+
+def __repr__(self):
+     return '<User %r>' % (self.first_name)			
